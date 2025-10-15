@@ -40,6 +40,5 @@ Place your musics in the binded folder to make them appear in the WebUI.
 - Check full support for non-mp3 files.
 - Sorting when clicking on a header
 - Database (to get an history, speed up requests...)
-- Resposive design
 - Use sorting options to make headers clickable
 - Complete sorting options to accept every tag
