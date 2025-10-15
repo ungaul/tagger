@@ -10,20 +10,21 @@ Flask-based WebUI to edit music collection metadata.
 Create a file containing this:
 ```yaml
 services:
-tagger:
-image: ghcr.io/ungaul/tagger:latest
-container_name: tagger
-ports:
-- "5013:5013"
-restart: unless-stopped
-volumes:
-- /home/gaulerie/Desktop/NewFolder:/app/musics
-- ./covers:/app/covers
+    tagger:
+        image: ghcr.io/ungaul/tagger:latest
+        container_name: tagger
+        ports:
+            - "5013:5013"
+        restart: unless-stopped
+        volumes:
+            - $HOME/Music:/app/musics
+            - ./covers:/app/covers
 ```
 Save as `docker-compose.yml`, then from the contaning folder:
 ```bash
 docker compose up -d
 ```
+Place your musics in the binded folder to make them appear in the WebUI.
 
 ## API Usage
 
