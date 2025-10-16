@@ -235,7 +235,7 @@ input:focus {
 }
 
 .track {
-  width: 50px;
+  width: 70px;
 }
 
 .comment {
@@ -280,6 +280,10 @@ input:focus {
 
 .cover_base_64, .cover_raw{
   display: none;
+}
+
+.modified_date{
+  width: 150px;
 }
 
 .asin {

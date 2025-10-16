@@ -48,4 +48,5 @@ METADATA_KEYS = {
   "lyrics": ["LYRICS"],
   "cover_raw": ["APIC:Cover", "cover"],
   "cover_base_64": ["cover_base_64"],
+  "modified_date": ["modified_date"],
 }

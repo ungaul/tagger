@@ -5,3 +5,4 @@ flask-login
 SQLAlchemy
 flask-migrate
 bcrypt
+python-dateutil

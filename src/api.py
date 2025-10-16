@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 from PIL import Image
 
+from dateutil import parser
 from mutagen import File
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC, Picture
@@ -52,10 +53,10 @@ def set_metadata(filepath, data):
     if not audio:
         return False
 
-    cover_b64 = data.pop('cover_base64', None)
-    if cover_b64:
+    cover_base_64 = data.pop('cover_base_64', None)
+    if cover_base_64:
         try:
-            image_bytes = base64.b64decode(cover_b64)
+            image_bytes = base64.b64decode(cover_base_64)
             img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
             img_byte_arr = io.BytesIO()
             img.save(img_byte_arr, format='JPEG')
@@ -196,17 +197,17 @@ def get_all_metadata(filepath):
     if cover_data:
         try:
             meta_cover = base64.b64encode(cover_data).decode('utf-8')
-            meta = {**{k: str(v) for k,v in audio.tags.items()}, 'cover_base64': meta_cover}
+            meta = {**{k: str(v) for k,v in audio.tags.items()}, 'cover_base_64': meta_cover}
             return meta
         except Exception as e:
             print(f"Error encoding cover: {e}")
             meta = {k: str(v) for k,v in audio.tags.items()}
-            meta['cover_base64'] = None
+            meta['cover_base_64'] = None
             return meta
     else:
         print("No cover found")
         meta = {k: str(v) for k,v in audio.tags.items()}
-        meta['cover_base64'] = None
+        meta['cover_base_64'] = None
         return meta
 
 def filter_and_sort_music_files(query, sort_by, sort_order, offset):
@@ -257,6 +258,21 @@ def update_music_metadata(filename, data):
     if not success:
         return {"error": "Failed to save metadata"}, 500
 
+    modified_date = data.get("modified_date")
+    if modified_date:
+        try:
+            if isinstance(modified_date, str):
+                dt = parser.parse(modified_date)
+            elif isinstance(modified_date, datetime):
+                dt = modified_date
+            else:
+                dt = None
+            if dt:
+                ts = dt.timestamp()
+                os.utime(filepath, (ts, ts))
+        except Exception as e:
+            print(f"Failed to set mtime during update for {filename}: {e}")
+
     for key, val in data.items():
         if hasattr(mf, key):
             setattr(mf, key, val)
@@ -271,8 +287,8 @@ def update_music_metadata(filename, data):
             mf.filename = new_name
         except Exception as e:
             return {"error": f"Failed to rename file: {str(e)}"}, 500
-    db.session.commit()
 
+    db.session.commit()
     return {"success": True, "filename": mf.filename}, 200
 
 def delete_music_file(filename):
@@ -351,17 +367,14 @@ def extract_value(meta, keys):
 def scan_and_sync(app):
     with app.app_context():
         disk_files = [f for f in os.listdir(MUSIC_FOLDER) if allowed_file(f)]
-        print(f"Disk files found: {disk_files}")
-
         db_files = {mf.filename: mf for mf in MusicFile.query.all()}
-        print(f"DB files before sync: {list(db_files.keys())}")
-
         for filename in list(db_files.keys()):
             if filename not in disk_files:
-                mf = db_files[filename]
-                db.session.delete(mf)
-                print(f"Removed missing file from DB: {filename}")
+                db.session.delete(db_files[filename])
         db.session.commit()
+
+        db.session.expire_all()
+        db_files = {mf.filename: mf for mf in MusicFile.query.all()}
 
         for filename in disk_files:
             filepath = os.path.join(MUSIC_FOLDER, filename)
@@ -369,11 +382,16 @@ def scan_and_sync(app):
             mtime = datetime.fromtimestamp(stat.st_mtime)
 
             mf = db_files.get(filename)
-            if mf and mf.updated_at and mf.updated_at >= mtime:
-                print(f"{filename} is already up-to-date")
-                continue
+            if mf:
+                db_mod_date = mf.modified_date if hasattr(mf, 'modified_date') else None
+                if db_mod_date and isinstance(db_mod_date, datetime):
+                    if db_mod_date >= mtime:
+                        continue
+                elif mf.updated_at and mf.updated_at >= mtime:
+                    continue
 
             meta = get_all_metadata(filepath)
+
             data = {}
             for field, keys in METADATA_KEYS.items():
                 if field == "filename":
@@ -381,28 +399,24 @@ def scan_and_sync(app):
                 elif field == "cover_base_64":
                     cover_bytes = get_cover_bytes(filepath)
                     if cover_bytes:
-                        data[field] = base64.b64encode(cover_bytes).decode('utf-8')
-                        print(f"Extracted cover for {filename}, size {len(data[field])} chars")
+                        data[field] = base64.b64encode(cover_bytes).decode("utf-8")
                     else:
                         data[field] = None
-                        print(f"No cover found for {filename}")
                 else:
                     data[field] = extract_value(meta, keys)
+
+            data["modified_date"] = mtime
 
             if mf is None:
                 mf = MusicFile(filename=filename)
                 db.session.add(mf)
-                print(f"Added new entry for {filename}")
 
             for k, v in data.items():
                 setattr(mf, k, v)
 
             mf.updated_at = datetime.utcnow()
-            print(f"Synced metadata for {filename}")
 
         db.session.commit()
-        print("DB commit done")
-
 def conditional_scan(app):
     global _last_scan_time
     now = time.time()

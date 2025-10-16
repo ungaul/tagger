@@ -62,6 +62,7 @@ class MusicFile(db.Model):
     uploader = db.Column(db.String(128))
     purl = db.Column(db.String(512))
     synopsis = db.Column(db.Text)
+    modified_date = db.Column(db.Text)
     acoustid_id = db.Column(db.String(64))
     copyright = db.Column(db.String(256))
     involved_people = db.Column(db.Text)

@@ -2,8 +2,6 @@
 
 Flask-based WebUI to edit music collection metadata.
 
-> Disclaimer : This project is in development (hence, no history nor fast fetching from the database for now, it is highly unefficient as it fetches files for each request)
-
 ![Screenshot](screenshot.png)
 
 ## Installation
@@ -20,6 +18,7 @@ services:
             - $HOME/Music:/app/musics
             - ./covers:/app/covers
             - ./data:/app/data
+            - ./migrations:/app/migrations
         environment:
             - DB_USERNAME=admin
             - DB_PASSWORD=changeme
@@ -42,10 +41,8 @@ Place your musics in the binded folder to make them appear in the WebUI.
 
 ## To Do
 
-- Database (to get an history, speed up requests...)
-- Make successful login remove overlay + load results
 - Check full support for non-mp3 files.
-- Sorting when clicking on a header
-- Complete sorting options to accept every tag
-- Appeler les tags a scanner en js via data.py
-- Trouver comment amperfy detecte "recent" et ajt un champ de metadonnees
+- Sorting when clicking on a header.
+- Complete sorting options to accept every tag.
+- Trouver comment amperfy detecte "recent" et ajt un champ de metadonnees.
+- Fix the db migration "error" trying to create an admin account each time.

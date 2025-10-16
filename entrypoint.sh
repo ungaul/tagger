@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 if [ ! -d "./migrations" ] || [ ! -f "/app/data/data.db" ]; then
     echo "Initializing migrations and DB..."
@@ -10,6 +11,7 @@ else
     flask db upgrade
 fi
 
+echo "Creating admin user if not exists..."
 python src/auth.py
 
 exec flask run --host=0.0.0.0 --port=5013

@@ -1,4 +1,4 @@
-$(function () {
+$(document).ready(function(){
   checkAuth()
     .done(() => {
       $("#loginForm").removeClass("active");

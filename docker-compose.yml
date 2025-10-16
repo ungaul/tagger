@@ -5,9 +5,10 @@ services:
     ports:
       - "5013:5013"
     volumes:
-      - /home/gaulerie/Desktop/NewFolder:/app/musics
+      - $HOME/Music:/app/musics
       - ./covers:/app/covers
       - ./data:/app/data
+      - ./migrations:/app/migrations
     environment:
       - DB_USERNAME=admin
       - DB_PASSWORD=changeme

@@ -107,7 +107,7 @@ function createMusicRow(music) {
         const base64 = reader.result.split(",")[1];
         $cover.attr("src", reader.result);
         $row.addClass("dirty");
-        $row.data("cover_base64", base64);
+        $row.data("cover_base_64", base64);
       };
       reader.readAsDataURL(file);
       $fileInput.remove();
@@ -130,13 +130,13 @@ function saveRow($row) {
     data.new_filename = data.filename;
   }
 
-  if ($row.data("cover_base64")) {
-    data.cover_base64 = $row.data("cover_base64");
+  if ($row.data("cover_base_64")) {
+    data.cover_base_64 = $row.data("cover_base_64");
   }
 
   return saveMusic(oldFilename, data).always(() => {
     $row.removeClass("dirty");
-    $row.removeData("cover_base64");
+    $row.removeData("cover_base_64");
     if (data.new_filename) {
       $row.data("filename", data.new_filename);
     }
