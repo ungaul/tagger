@@ -45,5 +45,4 @@ Place your musics in the binded folder to make them appear in the WebUI.
 - Check full support for non-mp3 files.
 - Sorting when clicking on a header.
 - Check that sorting options accept every tag.
-- URGENT : huge performance issue on big libraries
 - Support/respect subfolder structure
