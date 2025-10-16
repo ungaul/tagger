@@ -365,17 +365,23 @@ def extract_value(meta, keys):
     return None
 
 def scan_and_sync(app):
+    start_time = time.time()
     with app.app_context():
         disk_files = [f for f in os.listdir(MUSIC_FOLDER) if allowed_file(f)]
         db_files = {mf.filename: mf for mf in MusicFile.query.all()}
+
+        removed = 0
         for filename in list(db_files.keys()):
             if filename not in disk_files:
                 db.session.delete(db_files[filename])
+                removed +=1
         db.session.commit()
 
         db.session.expire_all()
         db_files = {mf.filename: mf for mf in MusicFile.query.all()}
 
+        new = 0
+        edited = 0
         for filename in disk_files:
             filepath = os.path.join(MUSIC_FOLDER, filename)
             stat = os.stat(filepath)
@@ -389,27 +395,24 @@ def scan_and_sync(app):
                         continue
                 elif mf.updated_at and mf.updated_at >= mtime:
                     continue
+                edited += 1
+            else:
+                new += 1
+                mf = MusicFile(filename=filename)
+                db.session.add(mf)
 
             meta = get_all_metadata(filepath)
-
             data = {}
             for field, keys in METADATA_KEYS.items():
                 if field == "filename":
                     data[field] = filename
                 elif field == "cover_base_64":
                     cover_bytes = get_cover_bytes(filepath)
-                    if cover_bytes:
-                        data[field] = base64.b64encode(cover_bytes).decode("utf-8")
-                    else:
-                        data[field] = None
+                    data[field] = base64.b64encode(cover_bytes).decode("utf-8") if cover_bytes else None
                 else:
                     data[field] = extract_value(meta, keys)
 
             data["modified_date"] = mtime
-
-            if mf is None:
-                mf = MusicFile(filename=filename)
-                db.session.add(mf)
 
             for k, v in data.items():
                 setattr(mf, k, v)
@@ -417,6 +420,10 @@ def scan_and_sync(app):
             mf.updated_at = datetime.utcnow()
 
         db.session.commit()
+
+    elapsed = time.time() - start_time
+    print(f"Scan finished in {elapsed:.2f}s: {new} new, {edited} edited, {removed} removed, {len(disk_files)} total files")
+        
 def conditional_scan(app):
     global _last_scan_time
     now = time.time()

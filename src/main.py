@@ -111,15 +111,6 @@ def create_admin():
                 print(f"Error creating admin user: {e}")
         else:
             print(f"Admin user '{username}' already exists")
-            
-@app.route('/api/scan', methods=['POST'])
-@login_required
-def api_scan():
-    try:
-        scan_and_sync(app)
-        return jsonify({"success": True, "message": "Scan completed"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5013, debug=True)

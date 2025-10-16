@@ -20,9 +20,10 @@ services:
             - ./data:/app/data
             - ./migrations:/app/migrations
         environment:
-            - DB_USERNAME=admin
-            - DB_PASSWORD=changeme
-            - SECRET_KEY=aReallySecretKey
+            DB_USERNAME: admin
+            DB_PASSWORD: changeme
+            SECRET_KEY: aReallySecretKey
+        mem_limit: 512m
 ```
 Save as `docker-compose.yml`, then from the contaning folder:
 ```bash
@@ -43,6 +44,6 @@ Place your musics in the binded folder to make them appear in the WebUI.
 
 - Check full support for non-mp3 files.
 - Sorting when clicking on a header.
-- Complete sorting options to accept every tag.
-- Trouver comment amperfy detecte "recent" et ajt un champ de metadonnees.
-- Fix the db migration "error" trying to create an admin account each time.
+- Check that sorting options accept every tag.
+- URGENT : huge performance issue on big libraries
+- Support/respect subfolder structure
