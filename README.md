@@ -47,3 +47,5 @@ Place your musics in the binded folder to make them appear in the WebUI.
 - Check full support for non-mp3 files.
 - Sorting when clicking on a header
 - Complete sorting options to accept every tag
+- Appeler les tags a scanner en js via data.py
+- Trouver comment amperfy detecte "recent" et ajt un champ de metadonnees

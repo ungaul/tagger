@@ -278,6 +278,10 @@ input:focus {
   width: 150px;
 }
 
+.cover_base_64, .cover_raw{
+  display: none;
+}
+
 .asin {
   width: 100px;
 }

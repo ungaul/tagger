@@ -1,21 +1,3 @@
-function login(username, password) {
-  return $.ajax({
-    url: "/login",
-    method: "POST",
-    contentType: "application/json",
-    xhrFields: { withCredentials: true },
-    data: JSON.stringify({ username, password }),
-  });
-}
-
-function checkAuth() {
-  return $.ajax({
-    url: "/api/music",
-    method: "GET",
-    xhrFields: { withCredentials: true },
-  });
-}
-
 $(function () {
   checkAuth()
     .done(() => {
