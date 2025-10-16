@@ -2,3 +2,6 @@ flask
 mutagen
 pillow
 flask-login
+SQLAlchemy
+flask-migrate
+bcrypt

@@ -21,6 +21,16 @@ function deleteMusic(filename) {
     });
 }
 
+function notification(msg) {
+  const $n = $("#notification");
+  $n.text(msg).addClass("active");
+  clearTimeout($n.data("timeout"));
+  const timeout = setTimeout(() => {
+    $n.removeClass("active");
+  }, 3000);
+  $n.data("timeout", timeout);
+}
+
 function getQueryParam(param) {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(param) || "";

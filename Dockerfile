@@ -11,4 +11,7 @@ ENV FLASK_APP=src/main.py
 ENV FLASK_RUN_PORT=5013
 ENV FLASK_RUN_HOST=0.0.0.0
 
-CMD ["flask", "run"]
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+CMD ["/app/entrypoint.sh"]

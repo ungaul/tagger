@@ -398,3 +398,36 @@ input:focus {
   justify-content: center;
   align-items: center;
 }
+
+#loginForm{
+  width: 100vw;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  z-index: 11;
+  backdrop-filter: brightness(0.2);
+  position: fixed;
+  top: 0;
+  display: none;
+}
+
+#loginForm.active{
+  display: flex;
+}
+
+#loginForm input{
+  border: none;
+  background: var(--third);
+  padding: 10px 15px;
+  border-radius: 100px;
+}
+
+#loginForm button{
+  background: var(--accent);
+  color: var(--first);
+  padding: 10px 15px;
+  border-radius: 100px;
+}

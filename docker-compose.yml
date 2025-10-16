@@ -7,3 +7,8 @@ services:
     volumes:
       - /home/gaulerie/Desktop/NewFolder:/app/musics
       - ./covers:/app/covers
+      - ./data:/app/data
+    environment:
+      - DB_USERNAME=admin
+      - DB_PASSWORD=changeme
+      - SECRET_KEY=aReallySecretKey

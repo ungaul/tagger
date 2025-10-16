@@ -13,10 +13,32 @@ from mutagen.id3 import (
     ID3, APIC, error as ID3Error, TPE1, TPE2, TIT2, TALB, TDRC, TCON, TKEY, TRCK, TXXX, ID3NoHeaderError
 )
 
-app = Flask(__name__)
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from models import db, User
+from flask_login import LoginManager
+from flask import render_template, redirect, url_for, flash
+from flask_login import login_user, logout_user, login_required, current_user
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-MUSIC_FOLDER = os.path.join(BASE_DIR, 'musics')
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////app/data/data.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
+
+db.init_app(app)
+migrate = Migrate(app, db)
+
+login_manager = LoginManager()
+login_manager.login_view = 'login'
+login_manager.init_app(app)
+
+from models import User
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+MUSIC_FOLDER = '/app/musics'
 PAGE_SIZE = 25
 ALLOWED_EXTENSIONS = ('.mp3', '.flac', '.m4a', '.mp4', '.ogg', '.wav')
 
@@ -86,7 +108,6 @@ def set_metadata(filepath, data):
         except ID3Error:
             id3 = ID3()
 
-        # Mapping clairement les clés standard à leurs frames ID3
         key_map = {
             "artist": TPE1,
             "album_artist": TPE2,
@@ -98,19 +119,16 @@ def set_metadata(filepath, data):
             "track": TRCK,
         }
 
-        # Supprimer les frames standard et TXXX pour éviter doublons
         for frame in list(id3.keys()):
             if frame in [frame_.__name__ for frame_ in key_map.values()] or frame == 'TXXX':
                 id3.delall(frame)
 
         handled = set(key_map.keys())
 
-        # Ajouter tags standard
         for key, frame_class in key_map.items():
             if key in data and data[key]:
                 id3.add(frame_class(encoding=3, text=str(data[key])))
 
-        # Ajouter TXXX pour le reste
         for k, v in data.items():
             if k in handled or not v:
                 continue
@@ -119,7 +137,6 @@ def set_metadata(filepath, data):
         id3.save(filepath)
         return True
 
-    # Reste de ton code inchangé pour FLAC, MP4, etc.
     elif isinstance(audio, FLAC):
         for k, v in data.items():
             if v in (None, ''):
@@ -165,23 +182,17 @@ def set_metadata(filepath, data):
         return True
 
 def get_all_metadata(filepath):
-    print(f"Loading metadata for: {filepath}")
     audio = File(filepath, easy=False)
     if not audio or not audio.tags:
         print("No audio or tags found")
         return {}
 
-    print("Tags found:", list(audio.tags.keys()))
-
     cover_data = None
     try:
         ext = filepath.lower().rsplit('.', 1)[-1]
-        print("File extension:", ext)
-
         if ext == 'mp3':
             try:
                 id3 = ID3(filepath)
-                print("ID3 loaded")
             except ID3NoHeaderError:
                 print("ID3 header error")
                 id3 = None
@@ -194,14 +205,12 @@ def get_all_metadata(filepath):
         elif ext == 'flac':
             audio_flac = FLAC(filepath)
             if audio_flac.pictures:
-                print(f"Found FLAC picture with size {len(audio_flac.pictures[0].data)}")
                 cover_data = audio_flac.pictures[0].data
 
         elif ext in ('m4a', 'mp4'):
             audio_mp4 = MP4(filepath)
             covers = audio_mp4.tags.get('covr')
             if covers:
-                print(f"Found MP4 cover with size {len(covers[0])}")
                 cover_data = covers[0]
 
     except Exception as e:
@@ -209,10 +218,8 @@ def get_all_metadata(filepath):
         cover_data = None
 
     if cover_data:
-        print(f"Encoding cover of size {len(cover_data)}")
         try:
             meta_cover = base64.b64encode(cover_data).decode('utf-8')
-            print("Cover base64 encoded successfully")
             meta = {**{k: str(v) for k,v in audio.tags.items()}, 'cover_base64': meta_cover}
             return meta
         except Exception as e:
@@ -230,7 +237,24 @@ def get_all_metadata(filepath):
 def index():
     return app.send_static_file('index.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    if request.method == 'POST':
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        user = User.query.filter_by(username=username).first()
+        if user is None or not user.check_password(password):
+            return jsonify({"error": "Invalid username or password"}), 401
+        login_user(user)
+        return jsonify({"success": True})
+    else:
+        return jsonify({"error": "POST required"}), 405
+
 @app.route('/api/music')
+@login_required
 def api_list_music():
     try:
         offset = int(request.args.get('offset', '0'))
@@ -240,12 +264,7 @@ def api_list_music():
     query = request.args.get('q', '').lower().strip()
     sort_by = request.args.get('sort_by', 'title').lower().strip()
     sort_order = request.args.get('sort_order', 'asc').lower().strip()
-
-    print(f"Received search query: '{query}', offset: {offset}, sort_by: {sort_by}, sort_order: {sort_order}")
-
     all_files = sorted(f for f in os.listdir(MUSIC_FOLDER) if allowed_file(f))
-    print(f"Total files found: {len(all_files)}")
-
     if query:
         filtered = []
         for f in all_files:
@@ -273,7 +292,6 @@ def api_list_music():
                 filtered.append(f)
 
         all_files = filtered
-        print(f"Total files after filtering: {len(filtered)}")
 
     def extract_sort_key(filename):
         path = os.path.join(MUSIC_FOLDER, filename)
@@ -307,10 +325,10 @@ def api_list_music():
         items.append({'filename': filename, 'metadata': meta})
 
     more = len(all_files) > offset + PAGE_SIZE
-    print(f"Returning {len(items)} items, more={more}")
     return jsonify({'musics': items, 'more': more})
 
 @app.route('/api/music/<path:filename>', methods=['GET', 'POST'])
+@login_required
 def api_song(filename):
     filepath = os.path.join(MUSIC_FOLDER, filename)
     if not os.path.isfile(filepath) or not allowed_file(filename):
@@ -339,6 +357,7 @@ def api_song(filename):
     return jsonify({"success": True, "filename": filename})
 
 @app.route('/api/music/delete', methods=['POST'])
+@login_required
 def api_delete_music():
     data = request.json or {}
     filename = data.get('filename')
@@ -357,6 +376,12 @@ def api_delete_music():
         return jsonify({"success": True, "filename": filename})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return jsonify({"success": True})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5013, debug=True)

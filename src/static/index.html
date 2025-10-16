@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="static/css/styles.css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tagger</title>
     <script defer src="static/js/script.js"></script>
     <script defer src="static/js/search.js"></script>
     <script defer src="static/js/helper.js"></script>
+    <script defer src="static/js/account.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="shortcut icon" href="static/img/cover.png" type="image/x-icon" />
     <script
@@ -29,5 +30,10 @@
     <div id="loading">No more music</div>
     <div id="save">Save</div>
     <div id="load-more">Load More</div>
+    <form id="loginForm">
+      <input id="username" type="text" placeholder="Username" required />
+      <input id="password" type="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
   </body>
 </html>

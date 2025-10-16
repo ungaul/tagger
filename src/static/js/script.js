@@ -130,16 +130,6 @@ function getFirstAvailable(metadata, keys) {
   return "";
 }
 
-function notification(msg) {
-  const $n = $("#notification");
-  $n.text(msg).addClass("active");
-  clearTimeout($n.data("timeout"));
-  const timeout = setTimeout(() => {
-    $n.removeClass("active");
-  }, 3000);
-  $n.data("timeout", timeout);
-}
-
 function createHeaderRow() {
   const $header = $("<div>").addClass("music-row header-row");
   $header.append(

@@ -2,7 +2,7 @@
 
 Flask-based WebUI to edit music collection metadata.
 
-> Disclaimer : This project is in development, therefore no database system is set (hence, no history nor API key protection for now, so anyone can access the API and delete/edit your library if you run this service publicly)
+> Disclaimer : This project is in development (hence, no history nor fast fetching from the database for now, it is highly unefficient as it fetches files for each request)
 
 ![Screenshot](screenshot.png)
 
@@ -19,6 +19,11 @@ services:
         volumes:
             - $HOME/Music:/app/musics
             - ./covers:/app/covers
+            - ./data:/app/data
+        environment:
+            - DB_USERNAME=admin
+            - DB_PASSWORD=changeme
+            - SECRET_KEY=aReallySecretKey
 ```
 Save as `docker-compose.yml`, then from the contaning folder:
 ```bash
@@ -37,8 +42,8 @@ Place your musics in the binded folder to make them appear in the WebUI.
 
 ## To Do
 
+- Database (to get an history, speed up requests...)
+- Make successful login remove overlay + load results
 - Check full support for non-mp3 files.
 - Sorting when clicking on a header
-- Database (to get an history, speed up requests...)
-- Use sorting options to make headers clickable
 - Complete sorting options to accept every tag
