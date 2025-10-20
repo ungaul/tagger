@@ -1,5 +1,7 @@
 # Music Metadata Tagger Backend
 
+Note: consider using [Metadata Remote](https://github.com/wow-signal-dev/metadata-remote) rather than this for reliability.
+
 Flask-based WebUI to edit music collection metadata.
 
 ![Screenshot](screenshot.png)
